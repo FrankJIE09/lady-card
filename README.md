@@ -4,6 +4,12 @@
 
 **在线游玩：** https://frankjie09.github.io/lady-card/
 
+## 15 秒宣传片
+
+[![今夜开牌 15 秒竖屏宣传片封面](promo/cover.jpg)](promo/tonight-card-15s.mp4)
+
+[观看有声竖屏视频（MP4）](promo/tonight-card-15s.mp4) · [查看视频制作与素材](promo/README.md)
+
 ## 怎么玩
 
 1. 选择牌组；点「玩法说明」查看或编辑 A–K 的规则。
@@ -53,7 +59,7 @@ pnpm install
 pnpm test
 ```
 
-端到端验证脚本：`scripts/browser-smoke.mjs`（需要可用的 Playwright 和 Chrome）。测试覆盖手机布局、三套牌、规则编辑、音乐、双端同步、刷新恢复和房主转移。
+端到端验证脚本：`scripts/browser-smoke.mjs`（需要可用的 Playwright 和 Chrome）。测试覆盖手机布局、三套牌、规则编辑、音乐、三人中途入场、刷新恢复和房主转移。
 
 ## 使用的技能
 

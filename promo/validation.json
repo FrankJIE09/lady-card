@@ -1,0 +1,12 @@
+{
+  "duration_seconds": 15,
+  "dimensions": "1080x1920",
+  "frame_rate": 30,
+  "video_codec": "h264",
+  "audio_codec": "aac",
+  "audio_sample_rate": 48000,
+  "integrated_lufs": -16.58,
+  "true_peak_dbtp": -1.67,
+  "full_decode": "passed",
+  "sha256": "e92ad9f3dd16bd2736eb404596b1343aa5bbfd5ed0b76ef5c0a571c2d7966449"
+}
