@@ -7,6 +7,7 @@ dist/
 .DS_Store
 test-results/
 promo/output/
+__pycache__/
 cloud/.wrangler/
 cloud/.openai/local/
 cloud/artifact.tar.gz

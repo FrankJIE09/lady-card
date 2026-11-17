@@ -7,3 +7,5 @@
 - 图片来源：`source/` 中的三张线上验收截图。渲染脚本为 `render.py`，需要 Python 的 Pillow、NumPy 与 FFmpeg。
 
 先运行 `python render.py --stills` 检查代表帧，再运行 `python render.py` 生成 MP4 和封面。输出文件位于本目录；中间帧和音轨位于 `output/`。
+
+抖音投稿封面为 `cover-douyin-3x4.jpg`（从竖屏封面裁切）和 `cover-douyin-4x3.jpg`（运行 `python render_douyin_cover.py` 生成），两种比例均保留牌面和游玩地址。
