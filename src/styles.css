@@ -2378,3 +2378,14 @@ textarea::placeholder {
     font-size: 8px;
   }
 }
+
+.dialog-message {
+  padding: 10px 12px;
+  color: #f5d3ad;
+  background: #d1b78114;
+  border: 1px solid #d1b78144;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}

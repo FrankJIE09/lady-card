@@ -60,11 +60,13 @@ function Dialog({
   children,
   onClose,
   wide = false,
+  message,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  message?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -88,6 +90,11 @@ function Dialog({
           <X size={20} />
         </button>
       </div>
+      {message && (
+        <p className="dialog-message" role="status">
+          {message}
+        </p>
+      )}
       {children}
     </dialog>
   );
@@ -927,7 +934,11 @@ export default function App() {
       </footer>
 
       {modal === "join" && (
-        <Dialog title="朋友，欢迎入座" onClose={() => setModal(null)}>
+        <Dialog
+          message={message}
+          title="朋友，欢迎入座"
+          onClose={() => setModal(null)}
+        >
           <p className="dialog-description">
             输入朋友分享的房间号，加入今晚的牌局。
           </p>
@@ -971,7 +982,11 @@ export default function App() {
         </Dialog>
       )}
       {modal === "local" && (
-        <Dialog title="同屏开一局" onClose={() => setModal(null)}>
+        <Dialog
+          message={message}
+          title="同屏开一局"
+          onClose={() => setModal(null)}
+        >
           <p className="dialog-description">
             共用一部手机，轮流抽牌。无需联网，聚会随时开场。
           </p>
@@ -1002,6 +1017,7 @@ export default function App() {
       )}
       {modal === "rules" && (
         <Dialog
+          message={message}
           title={`${theme.name} · 今晚怎么玩`}
           wide
           onClose={() => setModal(null)}
@@ -1076,7 +1092,11 @@ export default function App() {
         </Dialog>
       )}
       {modal === "invite" && room && (
-        <Dialog title="给朋友留好了位置" onClose={() => setModal(null)}>
+        <Dialog
+          message={message}
+          title="给朋友留好了位置"
+          onClose={() => setModal(null)}
+        >
           <div className="invite-content">
             <p>扫码入座，一起开启今晚的故事。</p>
             {qr ? (
@@ -1107,7 +1127,11 @@ export default function App() {
         </Dialog>
       )}
       {modal === "leave" && (
-        <Dialog title="先离开这桌？" onClose={() => setModal(null)}>
+        <Dialog
+          message={message}
+          title="先离开这桌？"
+          onClose={() => setModal(null)}
+        >
           <p className="dialog-description">
             {local
               ? "离开后，这一局的进度会结束。"
@@ -1123,7 +1147,7 @@ export default function App() {
           </div>
         </Dialog>
       )}
-      {message && (
+      {message && !modal && (
         <div className="toast" role="status">
           <span>{message}</span>
           <button
