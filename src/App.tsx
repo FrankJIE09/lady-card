@@ -940,7 +940,7 @@ export default function App() {
           onClose={() => setModal(null)}
         >
           <p className="dialog-description">
-            输入朋友分享的房间号，加入今晚的牌局。
+            输入朋友分享的房间号，随时入座。游戏中加入会排在玩家列表末尾，按顺序轮流抽牌。
           </p>
           <form className="stack-form" onSubmit={joinRoom}>
             <label>

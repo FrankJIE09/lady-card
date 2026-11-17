@@ -60,6 +60,21 @@ test('D1 room lifecycle preserves private tokens and serializes simultaneous dra
     assert.equal(after.room.remaining, 51);
     assert.equal(after.room.history.length, 1);
     assert.equal(after.room.turnPlayerId, guest.playerId);
+    const { response: lateResponse, data: late } = await request(`/api/rooms/${code}/join`, { name: '迟到的朋友' });
+    assert.equal(lateResponse.status, 200);
+    assert.equal(late.room.phase, 'playing');
+    assert.equal(late.room.remaining, 51);
+    assert.equal(late.room.turnPlayerId, guest.playerId);
+    assert.deepEqual(late.room.currentCard, after.room.currentCard);
+    assert.deepEqual(late.room.history, after.room.history);
+    assert.deepEqual(late.room.players.map(player => player.id), [host.playerId, guest.playerId, late.playerId]);
+    const { data: guestDraw } = await request(`/api/rooms/${code}/action`, { action: 'draw', revision: late.room.revision }, guest.token);
+    assert.equal(guestDraw.room.turnPlayerId, late.playerId);
+    const { data: lateDraw } = await request(`/api/rooms/${code}/action`, { action: 'draw', revision: guestDraw.room.revision }, late.token);
+    assert.equal(lateDraw.room.currentCard.playerId, late.playerId);
+    assert.equal(lateDraw.room.turnPlayerId, host.playerId);
+    assert.equal(lateDraw.room.remaining, 49);
+    assert.equal(new Set(lateDraw.room.history.map(card => card.id)).size, 3);
     const unauthenticated = await request(`/api/rooms/${code}`);
     assert.equal(unauthenticated.response.status, 401);
   } finally { sqlite.close(); }

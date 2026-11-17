@@ -97,16 +97,94 @@ test("simultaneous draws accept one revision once; turns and host permissions ar
   assert.equal(next.room.turnPlayerId, host.playerId);
 });
 
-test("a full game has no duplicate draws, ends at 52, and restart returns to joinable lobby", async () => {
+test("joining a live game preserves the deck and current turn, then seats the new player at the end", async () => {
+  const store = new MemoryRoomStore();
+  const service = new RoomService(store);
+  const host = await service.create({ name: "房主", mode: "lady" });
+  const friend = await service.join(host.room.code, { name: "朋友" });
+  const started = await service.action(host.room.code, host.token, {
+    action: "start",
+  });
+  const { room: before } = await service.action(host.room.code, host.token, {
+    action: "draw",
+    revision: started.room.revision,
+  });
+  const storedBefore = await store.get(host.room.code);
+  const late = await service.join(host.room.code, { name: "迟到的朋友" });
+  assert.equal(late.room.phase, "playing");
+  assert.equal(late.room.remaining, before.remaining);
+  assert.equal(late.room.turnPlayerId, friend.playerId);
+  assert.deepEqual(late.room.currentCard, before.currentCard);
+  assert.deepEqual(late.room.history, before.history);
+  assert.deepEqual(late.room.rules, before.rules);
+  assert.deepEqual(
+    late.room.players.map((player) => player.id),
+    [host.playerId, friend.playerId, late.playerId],
+  );
+  assert.deepEqual((await store.get(host.room.code))?.deck, storedBefore?.deck);
+  assert.equal(late.room.revision, before.revision + 1);
+  await assert.rejects(
+    () =>
+      service.action(host.room.code, late.token, {
+        action: "draw",
+        revision: late.room.revision,
+      }),
+    (error: ApiError) => error.status === 403,
+  );
+  let { room } = await service.action(host.room.code, friend.token, {
+    action: "draw",
+    revision: late.room.revision,
+  });
+  assert.equal(room.turnPlayerId, late.playerId);
+  ({ room } = await service.action(host.room.code, late.token, {
+    action: "draw",
+    revision: room.revision,
+  }));
+  assert.equal(room.currentCard?.playerId, late.playerId);
+  assert.equal(room.turnPlayerId, host.playerId);
+  assert.equal(room.remaining, 49);
+  assert.equal(new Set(room.history.map((card) => card.id)).size, 3);
+});
+
+test("a simultaneous join and draw retain both the new seat and exactly one drawn card", async () => {
+  const service = new RoomService(new MemoryRoomStore());
+  const host = await service.create({ name: "房主", mode: "lady" });
+  const started = await service.action(host.room.code, host.token, {
+    action: "start",
+  });
+  const [joined, draw] = await Promise.allSettled([
+    service.join(host.room.code, { name: "同时入场" }),
+    service.action(host.room.code, host.token, {
+      action: "draw",
+      revision: started.room.revision,
+    }),
+  ]);
+  if (joined.status !== "fulfilled") throw joined.reason;
+  let { room } = await service.get(host.room.code, joined.value.token);
+  if (draw.status === "rejected") {
+    assert.equal((draw.reason as ApiError).status, 409);
+    assert.equal(room.remaining, 52);
+    ({ room } = await service.action(host.room.code, host.token, {
+      action: "draw",
+      revision: room.revision,
+    }));
+  }
+  assert.deepEqual(
+    room.players.map((player) => player.id),
+    [host.playerId, joined.value.playerId],
+  );
+  assert.equal(room.remaining, 51);
+  assert.equal(room.history.length, 1);
+  assert.equal(room.currentCard?.playerId, host.playerId);
+  assert.equal(room.revision, started.room.revision + 2);
+});
+
+test("a full game ends at 52 unique cards and finished-room joiners participate after restart", async () => {
   const service = new RoomService(new MemoryRoomStore());
   const host = await service.create({ name: "房主", mode: "queen" });
   let { room } = await service.action(host.room.code, host.token, {
     action: "start",
   });
-  await assert.rejects(
-    () => service.join(room.code, { name: "迟到的朋友" }),
-    (error: ApiError) => error.status === 409,
-  );
   for (let i = 0; i < 52; i++)
     ({ room } = await service.action(room.code, host.token, {
       action: "draw",
@@ -124,15 +202,30 @@ test("a full game has no duplicate draws, ends at 52, and restart returns to joi
       }),
     (error: ApiError) => error.status === 409,
   );
+  const finished = structuredClone(room);
+  const late = await service.join(room.code, { name: "下一局的朋友" });
+  assert.equal(late.room.phase, "finished");
+  assert.equal(late.room.remaining, 0);
+  assert.equal(late.room.turnPlayerId, null);
+  assert.deepEqual(late.room.history, finished.history);
+  assert.deepEqual(late.room.currentCard, finished.currentCard);
+  assert.equal(late.room.players.at(-1)?.id, late.playerId);
   ({ room } = await service.action(room.code, host.token, {
     action: "restart",
   }));
   assert.equal(room.phase, "lobby");
   assert.equal(room.history.length, 0);
-  assert.equal(
-    (await service.join(room.code, { name: "新朋友" })).room.players.length,
-    2,
-  );
+  ({ room } = await service.action(room.code, host.token, {
+    action: "start",
+    revision: room.revision,
+  }));
+  assert.equal(room.players.length, 2);
+  assert.equal(room.remaining, 52);
+  ({ room } = await service.action(room.code, host.token, {
+    action: "draw",
+    revision: room.revision,
+  }));
+  assert.equal(room.turnPlayerId, late.playerId);
 });
 
 test("leaving transfers host and current turn, and invalidates departed credentials", async () => {

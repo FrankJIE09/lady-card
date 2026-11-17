@@ -151,8 +151,6 @@ export class RoomService {
     const name = nameOf(input.name);
     for (let attempt = 0; attempt < 5; attempt++) {
       const room = await this.load(code);
-      if (room.phase !== "lobby")
-        return fail(409, "这局已经开始，请等房主开启新一局后加入。");
       if (room.players.length >= 12)
         return fail(409, "房间已满，最多可加入 12 位朋友。");
       const player = { id: crypto.randomUUID(), name, token: newToken() };
