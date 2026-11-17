@@ -392,6 +392,9 @@ try {
       await late.getByText("已揭晓 1 / 52 张", { exact: true }).waitFor();
       assert.equal(await late.locator(".player").count(), 3);
       await noOverflow(late, "late mobile join");
+      await guest.waitForFunction(
+        () => document.querySelectorAll(".player").length === 3,
+      );
       await draw(guest, 2);
       await late.getByText("已揭晓 2 / 52 张", { exact: true }).waitFor();
       await draw(late, 3);
