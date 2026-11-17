@@ -1,0 +1,1 @@
+Generated copy of the shared game rules and room API. Run `npm run sync-source` from cloud/ after editing the originals. Keep these copies in the deployment source so the Worker build is self-contained.
