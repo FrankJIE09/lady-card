@@ -293,7 +293,7 @@ try {
   }
 
   await check(
-    "online room, QR invite, two-player sync, refresh, host transfer",
+    "online room, late mobile join, sync, refresh, host transfer",
     async () => {
       const hostContext = await browser.newContext({
         viewport: { width: 1440, height: 1000 },
@@ -303,10 +303,17 @@ try {
         isMobile: true,
         hasTouch: true,
       });
+      const lateContext = await browser.newContext({
+        viewport: { width: 320, height: 740 },
+        isMobile: true,
+        hasTouch: true,
+      });
       const host = await hostContext.newPage(),
-        guest = await guestContext.newPage();
+        guest = await guestContext.newPage(),
+        late = await lateContext.newPage();
       watch(host);
       watch(guest);
+      watch(late);
       await host.goto(base);
       await idle(host);
       await host
@@ -375,8 +382,25 @@ try {
       await guest.getByText("已揭晓 0 / 52 张", { exact: true }).waitFor();
       await draw(host, 1);
       await guest.getByText("已揭晓 1 / 52 张", { exact: true }).waitFor();
+      await late.goto(guestUrl.toString());
+      await idle(late);
+      await late
+        .getByRole("dialog")
+        .getByRole("textbox", { name: "你的昵称", exact: true })
+        .fill("迟到的好友");
+      await late.getByRole("button", { name: "加入这桌", exact: true }).click();
+      await late.getByText("已揭晓 1 / 52 张", { exact: true }).waitFor();
+      assert.equal(await late.locator(".player").count(), 3);
+      await noOverflow(late, "late mobile join");
       await draw(guest, 2);
-      await host.getByText("已揭晓 2 / 52 张", { exact: true }).waitFor();
+      await late.getByText("已揭晓 2 / 52 张", { exact: true }).waitFor();
+      await draw(late, 3);
+      await host.getByText("已揭晓 3 / 52 张", { exact: true }).waitFor();
+      await shot(late, "mobile-late-join-game");
+      await leave(late);
+      await host.waitForFunction(
+        () => document.querySelectorAll(".player").length === 2,
+      );
       const guestCard = await guest
         .locator(".flip-front .card-inner")
         .innerText();
@@ -386,7 +410,7 @@ try {
       );
       await guest.reload();
       await idle(guest);
-      await guest.getByText("已揭晓 2 / 52 张", { exact: true }).waitFor();
+      await guest.getByText("已揭晓 3 / 52 张", { exact: true }).waitFor();
       assert.equal(
         await guest.locator(".flip-front .card-inner").innerText(),
         guestCard,
@@ -402,10 +426,11 @@ try {
         .getByRole("button", { name: "抽一张牌", exact: true })
         .waitFor();
       assert.equal(await guest.locator(".player svg.lucide-crown").count(), 1);
-      await draw(guest, 3);
+      await draw(guest, 4);
       await leave(guest);
       await hostContext.close();
       await guestContext.close();
+      await lateContext.close();
     },
   );
   await desktop.close();
